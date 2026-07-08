@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "toolbox-session-transfer",
+  "description": "Toolbox local session-transfer plugins for Claude Code.",
+  "metadata": {
+    "description": "Local Claude Code plugins that convert the current Claude transcript into resumable Pi or OMP session JSONL files.",
+    "version": "0.1.0"
+  },
+  "owner": {
+    "name": "Ramiro Rivera"
+  },
+  "plugins": [
+    {
+      "name": "session-transfer",
+      "description": "Adds /session-transfer:pi and /session-transfer:omp commands for exporting the current Claude transcript into Pi or OMP sessions.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ramiro Rivera"
+      },
+      "source": "./plugins/session-transfer",
+      "category": "development"
+    }
+  ]
+}
