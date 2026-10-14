@@ -4,7 +4,7 @@
   "description": "Toolbox local session-transfer plugins for Claude Code.",
   "metadata": {
     "description": "Local Claude Code plugins that convert the current Claude transcript into resumable Pi or OMP session JSONL files.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "owner": {
     "name": "Ramiro Rivera"
@@ -13,7 +13,7 @@
     {
       "name": "session-transfer",
       "description": "Adds /session-transfer:pi and /session-transfer:omp commands for exporting the current Claude transcript into Pi or OMP sessions.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Ramiro Rivera"
       },

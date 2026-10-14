@@ -1,6 +1,6 @@
 {
   "name": "claude-session-transfer-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Claude Code marketplace plugin for transferring Claude transcripts into Pi or OMP sessions.",

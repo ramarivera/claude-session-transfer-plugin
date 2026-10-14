@@ -3,14 +3,22 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import test from "node:test";
 
 import { transfer } from "../scripts/session-transfer.mjs";
 
 const fixture = path.resolve(import.meta.dirname, "fixtures", "claude-session.jsonl");
-const piSessionManagerPath = process.env.PI_SESSION_MANAGER_PATH
-  || "/Volumes/ExtSSD/Caches/mise/installs/npm-earendil-works-pi-coding-agent/latest/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/session-manager.js";
-const ompBin = process.env.OMP_BIN || "/Volumes/ExtSSD/Caches/mise/installs/github-can1357-oh-my-pi/16.3.4/omp";
+function misePath(...args) {
+  const result = spawnSync(process.platform === "win32" ? "mise.exe" : "mise", args, { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr || result.error?.message);
+  return result.stdout.trim();
+}
+const piSessionManagerPath = process.env.PI_SESSION_MANAGER_PATH || path.join(
+  misePath("where", "npm:@earendil-works/pi-coding-agent"),
+  "node_modules", "@earendil-works", "pi-coding-agent", "dist", "core", "session-manager.js",
+);
+const ompBin = process.env.OMP_BIN || misePath("which", "omp");
 
 
 function readJsonl(file) {
@@ -18,7 +26,9 @@ function readJsonl(file) {
 }
 
 function tempOutput(name) {
-  return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "session-transfer-")), name);
+  const scratch = path.join(os.homedir(), "dev", "agentic-scratchpads", "toolbox", "session-transfer-tests");
+  fs.mkdirSync(scratch, { recursive: true });
+  return path.join(fs.mkdtempSync(path.join(scratch, "session-transfer-")), name);
 }
 
 test("converts Claude transcript into Pi v3 JSONL", () => {
@@ -48,6 +58,8 @@ test("converts Claude transcript into Pi v3 JSONL", () => {
   assert.equal(messages[2].toolCallId, "toolu_read_1");
   assert.equal(messages[2].toolName, "Read");
   assert.equal(messages[3].content[0].type, "thinking");
+  assert.equal(messages[1].usage.totalTokens, 22);
+  assert.equal(messages[3].usage.totalTokens, 25);
 });
 
 test("converts Claude transcript into OMP v3 JSONL", () => {
@@ -74,11 +86,21 @@ test("accepts Claude command single-string arguments", () => {
   assert.equal(readJsonl(output)[0].type, "session");
 });
 
+for (const cwd of [String.raw`C:\Users\test user\project`, String.raw`\\server\share\project`]) {
+  for (const quote of ['"', "'"]) {
+    test(`preserves Windows cwd backslashes with ${quote} quotes: ${cwd}`, () => {
+      const output = tempOutput("windows-path.jsonl");
+      transfer(["pi", `--source "${fixture}" --output "${output}" --cwd ${quote}${cwd}${quote} --json`]);
+      assert.equal(readJsonl(output)[0].cwd, path.resolve(cwd));
+    });
+  }
+}
+
 test("generated Pi session loads through Pi SessionManager", async () => {
   const output = tempOutput("pi-load.jsonl");
   transfer(["pi", "--source", fixture, "--output", output, "--json"]);
 
-  const { SessionManager } = await import(`file://${piSessionManagerPath}`);
+  const { SessionManager } = await import(pathToFileURL(piSessionManagerPath).href);
   const manager = SessionManager.open(output, path.dirname(output));
   const context = manager.buildSessionContext();
   assert.equal(context.messages.length, 4);

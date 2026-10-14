@@ -35,16 +35,15 @@ function tokenizeArgumentString(input) {
   const tokens = [];
   let current = "";
   let quote = null;
-  let escaped = false;
-
-  for (const char of input) {
-    if (escaped) {
-      current += char;
-      escaped = false;
-      continue;
-    }
-    if (char === "\\") {
-      escaped = true;
+  for (let index = 0; index < input.length; index++) {
+    const char = input[index];
+    const next = input[index + 1];
+    // Backslashes in Windows drive and UNC paths are literal. Only consume
+    // escapes for a quote delimiter or unquoted whitespace, never path text.
+    if (char === "\\" && next && quote !== "'" &&
+        (next === quote || (!quote && (/\s/.test(next) || next === "'" || next === '"')))) {
+      current += next;
+      index++;
       continue;
     }
     if (quote) {
@@ -68,7 +67,6 @@ function tokenizeArgumentString(input) {
     }
     current += char;
   }
-  if (escaped) current += "\\";
   if (quote) throw new Error(`Unclosed quote in arguments: ${input}`);
   if (current.length > 0) tokens.push(current);
   return tokens;
@@ -281,6 +279,7 @@ function usageFromClaude(usage) {
     output,
     cacheRead,
     cacheWrite,
+    totalTokens: input + output + cacheRead + cacheWrite,
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
   };
 }

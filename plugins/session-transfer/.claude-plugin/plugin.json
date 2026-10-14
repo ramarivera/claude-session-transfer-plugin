@@ -1,6 +1,6 @@
 {
   "name": "session-transfer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Convert the current Claude Code transcript into resumable Pi or OMP session JSONL files.",
   "author": {
     "name": "Ramiro Rivera"
